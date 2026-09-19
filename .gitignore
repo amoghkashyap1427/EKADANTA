@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Game saves
+saves/savegame.json
+
+# Temporary/debug scripts
+quick_trace.py
+simulate_run.py
+test_crash.py
+test_progression.py
+trace_test.py
+cleanup_patches.py
+patch_final_step14.py
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -39,7 +39,7 @@ jobs:
           
       - name: Build Web Version
         run: |
-          pygbag --build .
+          pygbag --template main.tmpl --build .
           
       - name: Setup Pages
         uses: actions/configure-pages@v5

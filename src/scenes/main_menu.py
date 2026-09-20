@@ -1,8 +1,7 @@
 import pygame
 from src.scenes.base_scene import BaseScene
 from src.utils.helpers import load_font
-from src.settings import COLORS
-
+from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
 from src.ui.components import Button
 from src.ui.effects import Diya, ProceduralBackground, GaneshaSilhouette
 
@@ -19,8 +18,8 @@ class MainMenuScene(BaseScene):
         
         # Diyas at the bottom corners
         self.diyas = [
-            Diya(150, self.game.logical_height - 100),
-            Diya(self.game.logical_width - 150, self.game.logical_height - 100)
+            Diya(150, LOGICAL_HEIGHT - 100),
+            Diya(LOGICAL_WIDTH - 150, LOGICAL_HEIGHT - 100)
         ]
         
         # Check save progress
@@ -28,7 +27,7 @@ class MainMenuScene(BaseScene):
                    self.game.save_manager.data.get("current_chapter", 0) > 0
                    
         self.buttons = []
-        start_y = self.game.logical_height // 2 + 50
+        start_y = LOGICAL_HEIGHT // 2 + 50
         spacing = 50
         
         menu_items = [
@@ -42,7 +41,7 @@ class MainMenuScene(BaseScene):
         
         for i, (text, action) in enumerate(menu_items):
             disabled = (text == "CONTINUE" and not has_save)
-            btn = Button(text, self.font_button, self.game.logical_width // 2, start_y + i * spacing, action, disabled)
+            btn = Button(text, self.font_button, LOGICAL_WIDTH // 2, start_y + i * spacing, action, disabled)
             self.buttons.append(btn)
             
         self.focused_index = 0
@@ -55,10 +54,10 @@ class MainMenuScene(BaseScene):
         
         # Pre-render text
         self.title_text = self.font_title.render("EKADANTA", True, COLORS["ivory"])
-        self.title_rect = self.title_text.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 - 150))
+        self.title_rect = self.title_text.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 - 150))
         
         self.subtitle_text = self.font_subtitle.render("Where every obstacle becomes a story.", True, COLORS["muted_gold"])
-        self.subtitle_rect = self.subtitle_text.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 - 60))
+        self.subtitle_rect = self.subtitle_text.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 - 60))
 
     def _move_focus(self, direction):
         original = self.focused_index
@@ -92,7 +91,11 @@ class MainMenuScene(BaseScene):
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
-                logical_mouse = self.game.get_logical_mouse(mouse_pos)
+                # We need to scale mouse pos to logical pos
+                # Actually, for simplicity and robustness in Pybag later, 
+                # calculating logical mouse pos depends on window scaling.
+                # Let's approximate logical pos:
+                logical_mouse = self.game.get_logical_mouse()
                 
                 for i, btn in enumerate(self.buttons):
                     if btn.rect.collidepoint(logical_mouse) and not btn.disabled:
@@ -126,33 +129,14 @@ class MainMenuScene(BaseScene):
 
     def update(self, dt: float):
         self.anim_time += dt
-        
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        
-        self.bg.update(dt, lw, lh)
+        self.bg.update(dt)
         self.silhouette.update(dt)
         
         for diya in self.diyas:
             diya.update(dt)
             
-        # Reposition dynamically for resize
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        
-        self.title_rect.center = (lw // 2, lh // 2 - 150)
-        self.subtitle_rect.center = (lw // 2, lh // 2 - 60)
-        self.diyas[0].x = 150
-        self.diyas[1].x = lw - 150
-        
-        start_y = lh // 2 + 50
-        for i, btn in enumerate(self.buttons):
-            btn.rect.centerx = lw // 2
-            btn.rect.centery = start_y + i * 50
-            
         # Get logical mouse pos
-        mouse_pos = pygame.mouse.get_pos()
-        logical_mouse = self.game.get_logical_mouse(mouse_pos)
+        logical_mouse = self.game.get_logical_mouse()
         
         # Update buttons
         btn_anim_start = 2.0
@@ -163,16 +147,13 @@ class MainMenuScene(BaseScene):
                 btn.update(dt, logical_mouse, i == self.focused_index)
 
     def draw(self, surface: pygame.Surface):
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        
         # 1. Background
         bg_alpha = min(1.0, self.anim_time / 1.0)
-        self.bg.draw(surface, bg_alpha, lw, lh)
+        self.bg.draw(surface, bg_alpha)
         
         # 2. Silhouette
         sil_alpha = min(1.0, max(0.0, (self.anim_time - 0.5) / 1.0))
-        self.silhouette.draw(surface, sil_alpha, lw, lh)
+        self.silhouette.draw(surface, sil_alpha)
         
         # 3. Diyas
         if self.anim_time > 1.0:

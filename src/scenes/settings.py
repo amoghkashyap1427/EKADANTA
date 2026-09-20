@@ -1,7 +1,7 @@
 import pygame
 from src.scenes.base_scene import BaseScene
 from src.utils.helpers import load_font
-from src.settings import COLORS
+from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
 from src.ui.components import Button
 
 class SettingsScene(BaseScene):
@@ -13,10 +13,10 @@ class SettingsScene(BaseScene):
         self.title_surf = self.font_title.render("SETTINGS", True, COLORS["ivory"])
         self.text_surf = self.font_text.render("Settings will be available soon.", True, COLORS["muted_gold"])
         
-        self.title_rect = self.title_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 - 50))
-        self.text_rect = self.text_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 + 20))
+        self.title_rect = self.title_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 - 50))
+        self.text_rect = self.text_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 + 20))
         
-        self.back_btn = Button("BACK", self.font_text, self.game.logical_width // 2, self.game.logical_height - 100, self._action_back)
+        self.back_btn = Button("BACK", self.font_text, LOGICAL_WIDTH // 2, LOGICAL_HEIGHT - 100, self._action_back)
         self.anim_time = 0.0
 
     def _action_back(self):
@@ -27,24 +27,13 @@ class SettingsScene(BaseScene):
         if event.type == pygame.KEYDOWN and (event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN):
             self._action_back()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            logical_mouse = self.game.get_logical_mouse(event.pos)
+            logical_mouse = self.game.get_logical_mouse()
             if self.back_btn.rect.collidepoint(logical_mouse):
                 self._action_back()
 
     def update(self, dt: float):
         self.anim_time += dt
-        
-        # Reposition dynamically
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        
-        self.title_rect.center = (lw // 2, lh // 2 - 50)
-        self.text_rect.center = (lw // 2, lh // 2 + 20)
-        self.back_btn.rect.centerx = lw // 2
-        self.back_btn.rect.centery = lh - 100
-        
-        mouse_pos = pygame.mouse.get_pos()
-        logical_mouse = self.game.get_logical_mouse(mouse_pos)
+        logical_mouse = self.game.get_logical_mouse()
         self.back_btn.update(dt, logical_mouse, is_focused=True)
 
     def draw(self, surface: pygame.Surface):

@@ -1,7 +1,7 @@
 import pygame
 from src.scenes.base_scene import BaseScene
 from src.utils.helpers import load_font
-from src.settings import COLORS
+from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
 
 class StoryIntroScene(BaseScene):
     def __init__(self, game):
@@ -18,9 +18,9 @@ class StoryIntroScene(BaseScene):
         self.title_surf = self.font_title.render("THE CHILD OF PARVATI", True, COLORS["ivory"])
         self.location_surf = self.font_location.render("Mount Kailash", True, COLORS["saffron"])
         
-        self.chapter_rect = self.chapter_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 - 60))
-        self.title_rect = self.title_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2))
-        self.location_rect = self.location_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 + 60))
+        self.chapter_rect = self.chapter_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 - 60))
+        self.title_rect = self.title_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2))
+        self.location_rect = self.location_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 + 60))
 
     def update(self, dt: float):
         self.time += dt
@@ -28,12 +28,6 @@ class StoryIntroScene(BaseScene):
             self.transitioning_out = True
             from src.scenes.kailash_world import KailashWorldScene
             self.game.scene_manager.change_scene(KailashWorldScene(self.game))
-            
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        self.chapter_rect.center = (lw // 2, lh // 2 - 60)
-        self.title_rect.center = (lw // 2, lh // 2)
-        self.location_rect.center = (lw // 2, lh // 2 + 60)
 
     def draw(self, surface: pygame.Surface):
         surface.fill(COLORS["black"])

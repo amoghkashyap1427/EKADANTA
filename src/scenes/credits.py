@@ -1,7 +1,7 @@
 import pygame
 from src.scenes.base_scene import BaseScene
 from src.utils.helpers import load_font
-from src.settings import COLORS
+from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
 from src.ui.components import Button
 
 class CreditsScene(BaseScene):
@@ -18,7 +18,7 @@ class CreditsScene(BaseScene):
             (self.font_text.render("An interactive story of devotion, courage, wisdom and obstacles.", True, COLORS["white"]), 120),
         ]
         
-        self.back_btn = Button("BACK", self.font_text, self.game.logical_width // 2, self.game.logical_height - 100, self._action_back)
+        self.back_btn = Button("BACK", self.font_text, LOGICAL_WIDTH // 2, LOGICAL_HEIGHT - 100, self._action_back)
         self.anim_time = 0.0
 
     def _action_back(self):
@@ -30,21 +30,14 @@ class CreditsScene(BaseScene):
             self._action_back()
             
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            logical_mouse = self.game.get_logical_mouse(event.pos)
+            logical_mouse = self.game.get_logical_mouse()
             if self.back_btn.rect.collidepoint(logical_mouse):
                 self._action_back()
 
     def update(self, dt: float):
         self.anim_time += dt
         
-        lw = self.game.logical_width
-        lh = self.game.logical_height
-        
-        self.back_btn.rect.centerx = lw // 2
-        self.back_btn.rect.centery = lh - 100
-        
-        mouse_pos = pygame.mouse.get_pos()
-        logical_mouse = self.game.get_logical_mouse(mouse_pos)
+        logical_mouse = self.game.get_logical_mouse()
         
         self.back_btn.update(dt, logical_mouse, is_focused=True)
 
@@ -55,7 +48,7 @@ class CreditsScene(BaseScene):
         
         for text_surf, y_offset in self.elements:
             text_surf.set_alpha(alpha)
-            rect = text_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2 + y_offset))
+            rect = text_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2 + y_offset))
             surface.blit(text_surf, rect)
             
         self.back_btn.text_surface.set_alpha(alpha)

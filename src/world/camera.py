@@ -1,9 +1,9 @@
 import pygame
-
+from src.settings import LOGICAL_WIDTH, LOGICAL_HEIGHT
 
 class Camera:
     def __init__(self, width: float, height: float):
-        self.camera_rect = pygame.Rect(0, 0, 1280, 720)
+        self.camera_rect = pygame.Rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT)
         self.width = width
         self.height = height
         self.x = 0.0
@@ -19,14 +19,14 @@ class Camera:
         self.shake_intensity = max(self.shake_intensity, intensity)
         self.shake_duration = max(self.shake_duration, duration)
 
-    def update(self, target, dt: float, logical_width: float = 1280, logical_height: float = 720):
+    def update(self, target, dt: float):
         # Desired position (center target)
-        target_x = target.x - logical_width / 2
-        target_y = target.y - logical_height / 2
+        target_x = target.x - LOGICAL_WIDTH / 2
+        target_y = target.y - LOGICAL_HEIGHT / 2
         
         # Clamp to world bounds
-        target_x = max(0, min(self.width - logical_width, target_x))
-        target_y = max(0, min(self.height - logical_height, target_y))
+        target_x = max(0, min(self.width - LOGICAL_WIDTH, target_x))
+        target_y = max(0, min(self.height - LOGICAL_HEIGHT, target_y))
         
         # Smooth interpolation (lerp)
         lerp_speed = 5.0 * dt
@@ -44,4 +44,5 @@ class Camera:
             self.offset_x = 0.0
             self.offset_y = 0.0
             
-        self.camera_rect = pygame.Rect(int(self.x + self.offset_x), int(self.y + self.offset_y), int(logical_width), int(logical_height))
+        self.camera_rect.x = int(self.x + self.offset_x)
+        self.camera_rect.y = int(self.y + self.offset_y)

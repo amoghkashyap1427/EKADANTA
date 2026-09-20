@@ -8,17 +8,17 @@ from src.systems.save_manager import SaveManager
 from src.scenes.main_menu import MainMenuScene
 
 class Game:
-    def __init__(self):
-        pygame.init()
+    def __init__(self, window):
         pygame.mixer.init()
         
         self.logical_width = LOGICAL_WIDTH
         self.logical_height = LOGICAL_HEIGHT
         
-        self.window = pygame.display.set_mode((self.logical_width, self.logical_height), pygame.RESIZABLE)
+        self.window = window
         pygame.display.set_caption(WINDOW_TITLE)
         
-        self.render_surface = pygame.Surface((self.logical_width, self.logical_height))
+        # Initial resize to match current window size
+        self._update_resolution(self.window.get_size())
         
         self.clock = pygame.time.Clock()
         self.running = True
@@ -54,9 +54,8 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.VIDEORESIZE:
-                # Video resize is handled mostly by the scaling in draw, 
-                # but we could respond to it if needed.
-                pass
+                # Video resize dynamically updates the logical width to maintain the fixed height
+                self._update_resolution((event.w, event.h))
             self.scene_manager.handle_event(event)
 
 
@@ -67,10 +66,46 @@ class Game:
         self.scene_manager.draw(self.render_surface)
         
         window_size = self.window.get_size()
-        scaled_surface = pygame.transform.smoothscale(self.render_surface, window_size)
         
-        self.window.blit(scaled_surface, (0, 0))
+        # Calculate aspect-preserving scale to fill the window completely (envelope strategy).
+        # We ensure no stretching occurs.
+        target_aspect = window_size[0] / window_size[1] if window_size[1] > 0 else 1
+        
+        # We already adjusted logical_width to match aspect, so they should be proportional.
+        # But just in case, we do a pure proportional scale.
+        scale = window_size[1] / self.logical_height
+        
+        new_width = int(self.logical_width * scale)
+        new_height = int(self.logical_height * scale)
+        
+        scaled_surface = pygame.transform.smoothscale(self.render_surface, (new_width, new_height))
+        
+        # Center if there's any tiny rounding error, but it should perfectly fit
+        offset_x = (window_size[0] - new_width) // 2
+        offset_y = (window_size[1] - new_height) // 2
+        
+        self.window.blit(scaled_surface, (offset_x, offset_y))
         pygame.display.flip()
+
+    def _update_resolution(self, size):
+        if size[1] <= 0: return
+        aspect = size[0] / size[1]
+        
+        # Keep height fixed at LOGICAL_HEIGHT (720), expand/shrink width
+        self.logical_height = LOGICAL_HEIGHT
+        self.logical_width = max(800, int(self.logical_height * aspect)) # Prevent it from getting too narrow
+        
+        # Recreate render surface
+        self.render_surface = pygame.Surface((self.logical_width, self.logical_height))
+        
+    def get_logical_mouse(self, mouse_pos):
+        window_size = self.window.get_size()
+        if window_size[0] == 0 or window_size[1] == 0: return (0, 0)
+        
+        scale_x = self.logical_width / window_size[0]
+        scale_y = self.logical_height / window_size[1]
+        
+        return (mouse_pos[0] * scale_x, mouse_pos[1] * scale_y)
 
     async def run(self):
         while self.running:

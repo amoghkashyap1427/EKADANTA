@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
+from src.settings import COLORS
 
 class Diya:
     def __init__(self, x: int, y: int):
@@ -102,13 +102,13 @@ class GaneshaSilhouette:
     def update(self, dt: float):
         self.time += dt
         
-    def draw(self, surface: pygame.Surface, fade_in_progress: float):
+    def draw(self, surface: pygame.Surface, fade_in_progress: float, logical_width: float, logical_height: float):
         # Pulse alpha slowly
         pulse = math.sin(self.time * 0.5) * 10
         current_alpha = max(0, min(255, int((self.target_alpha + pulse) * fade_in_progress)))
         
         self.surface.set_alpha(current_alpha)
-        rect = self.surface.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2))
+        rect = self.surface.get_rect(center=(logical_width // 2, logical_height // 2))
         surface.blit(self.surface, rect)
 
 class ProceduralBackground:
@@ -117,10 +117,10 @@ class ProceduralBackground:
         for _ in range(30):
             self.particles.append(self._spawn_particle())
         
-        # Pre-render radial light
-        self.light = pygame.Surface((LOGICAL_WIDTH, LOGICAL_HEIGHT), pygame.SRCALPHA)
-        center = (LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2)
-        radius = LOGICAL_HEIGHT // 1.5
+        # Pre-render radial light very large to cover all possible resolutions
+        self.light = pygame.Surface((3000, 2000), pygame.SRCALPHA)
+        center = (1500, 1000)
+        radius = 800
         for i in range(10, 0, -1):
             r = int(radius * (i / 10.0))
             alpha = int(10 * (1.0 - (i / 10.0)))
@@ -130,31 +130,32 @@ class ProceduralBackground:
 
     def _spawn_particle(self):
         return {
-            "x": random.uniform(0, LOGICAL_WIDTH),
-            "y": random.uniform(0, LOGICAL_HEIGHT),
+            "x": random.uniform(0, 3000),
+            "y": random.uniform(0, 2000),
             "vx": random.uniform(-10, 10),
             "vy": random.uniform(-5, 5),
             "size": random.uniform(1, 3),
             "phase": random.uniform(0, math.pi * 2)
         }
 
-    def update(self, dt: float):
+    def update(self, dt: float, logical_width: float = 1280, logical_height: float = 720):
         self.time += dt
         for p in self.particles:
             p["x"] += (p["vx"] + math.sin(self.time + p["phase"]) * 10) * dt
             p["y"] += (p["vy"] + math.cos(self.time * 0.5 + p["phase"]) * 5) * dt
             
             # Wrap around
-            if p["x"] < 0: p["x"] = LOGICAL_WIDTH
-            elif p["x"] > LOGICAL_WIDTH: p["x"] = 0
-            if p["y"] < 0: p["y"] = LOGICAL_HEIGHT
-            elif p["y"] > LOGICAL_HEIGHT: p["y"] = 0
+            if p["x"] < 0: p["x"] = logical_width
+            elif p["x"] > logical_width: p["x"] = 0
+            if p["y"] < 0: p["y"] = logical_height
+            elif p["y"] > logical_height: p["y"] = 0
 
-    def draw(self, surface: pygame.Surface, fade_in_progress: float):
+    def draw(self, surface: pygame.Surface, fade_in_progress: float, logical_width: float, logical_height: float):
         surface.fill(COLORS["charcoal"])
         
         self.light.set_alpha(int(255 * fade_in_progress))
-        surface.blit(self.light, (0, 0))
+        light_rect = self.light.get_rect(center=(logical_width // 2, logical_height // 2))
+        surface.blit(self.light, light_rect)
         
         # Draw dust particles
         for p in self.particles:

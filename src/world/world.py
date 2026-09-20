@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
+from src.settings import COLORS
 
 class World:
     def __init__(self, width: int, height: int):
@@ -85,17 +85,17 @@ class World:
             if e.active:
                 e.update(dt)
 
-    def draw(self, surface: pygame.Surface, camera, darken_factor: float = 0.0):
+    def draw(self, surface: pygame.Surface, camera, logical_width: float, logical_height: float, darken_factor: float = 0.0):
         # Draw background based on camera
         # Only blit the visible portion
-        src_rect = pygame.Rect(int(camera.x), int(camera.y), LOGICAL_WIDTH, LOGICAL_HEIGHT)
+        src_rect = pygame.Rect(int(camera.x), int(camera.y), int(logical_width), int(logical_height))
         # Ensure it doesn't go out of bounds of surface
         src_rect.clamp_ip(self.bg_surf.get_rect())
         
         surface.blit(self.bg_surf, (0, 0), src_rect)
         
         if darken_factor > 0:
-            dark_surf = pygame.Surface((LOGICAL_WIDTH, LOGICAL_HEIGHT), pygame.SRCALPHA)
+            dark_surf = pygame.Surface((int(logical_width), int(logical_height)), pygame.SRCALPHA)
             dark_surf.fill((0, 0, 0, int(150 * darken_factor)))
             surface.blit(dark_surf, (0, 0))
         
@@ -103,14 +103,14 @@ class World:
         for e in self.entities:
             if e.active:
                 # Basic culling
-                if (camera.x - 100 <= e.x <= camera.x + LOGICAL_WIDTH + 100) and \
-                   (camera.y - 100 <= e.y <= camera.y + LOGICAL_HEIGHT + 100):
+                if (camera.x - 100 <= e.x <= camera.x + logical_width + 100) and \
+                   (camera.y - 100 <= e.y <= camera.y + logical_height + 100):
                     e.draw(surface, camera)
                     
         # Draw particles
         for p in self.particles:
-            if (camera.x <= p["x"] <= camera.x + LOGICAL_WIDTH) and \
-               (camera.y <= p["y"] <= camera.y + LOGICAL_HEIGHT):
+            if (camera.x <= p["x"] <= camera.x + logical_width) and \
+               (camera.y <= p["y"] <= camera.y + logical_height):
                 alpha = max(0, min(255, int(100 + math.sin(self.time * 3 + p["phase"]) * 100)))
                 pygame.draw.circle(surface, (*COLORS["gold"], alpha), 
                                   (int(p["x"] - camera.x), int(p["y"] - camera.y)), 2)

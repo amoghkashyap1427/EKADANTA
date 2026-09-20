@@ -1,7 +1,7 @@
 import pygame
 from src.scenes.base_scene import BaseScene
 from src.utils.helpers import load_font
-from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
+from src.settings import COLORS
 from src.ui.components import Button
 
 class HowToPlayScene(BaseScene):
@@ -23,7 +23,7 @@ class HowToPlayScene(BaseScene):
             d_surf = self.font_text.render(text, True, COLORS["ivory"])
             self.rendered_instructions.append((t_surf, d_surf))
             
-        self.back_btn = Button("BACK", self.font_text, LOGICAL_WIDTH // 2, LOGICAL_HEIGHT - 80, self._action_back)
+        self.back_btn = Button("BACK", self.font_text, self.game.logical_width // 2, self.game.logical_height - 80, self._action_back)
         self.anim_time = 0.0
 
     def _action_back(self):
@@ -34,16 +34,21 @@ class HowToPlayScene(BaseScene):
         if event.type == pygame.KEYDOWN and (event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN):
             self._action_back()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            window_size = self.game.window.get_size()
-            logical_mouse = (event.pos[0] * LOGICAL_WIDTH / window_size[0], event.pos[1] * LOGICAL_HEIGHT / window_size[1])
+            logical_mouse = self.game.get_logical_mouse(event.pos)
             if self.back_btn.rect.collidepoint(logical_mouse):
                 self._action_back()
 
     def update(self, dt: float):
         self.anim_time += dt
-        window_size = self.game.window.get_size()
+        
+        lw = self.game.logical_width
+        lh = self.game.logical_height
+        
+        self.back_btn.rect.centerx = lw // 2
+        self.back_btn.rect.centery = lh - 80
+        
         mouse_pos = pygame.mouse.get_pos()
-        logical_mouse = (mouse_pos[0] * LOGICAL_WIDTH / window_size[0], mouse_pos[1] * LOGICAL_HEIGHT / window_size[1])
+        logical_mouse = self.game.get_logical_mouse(mouse_pos)
         self.back_btn.update(dt, logical_mouse, is_focused=True)
 
     def draw(self, surface: pygame.Surface):
@@ -57,8 +62,8 @@ class HowToPlayScene(BaseScene):
             t_surf.set_alpha(alpha)
             d_surf.set_alpha(alpha)
             
-            t_rect = t_surf.get_rect(center=(LOGICAL_WIDTH // 2, start_y + i * spacing))
-            d_rect = d_surf.get_rect(center=(LOGICAL_WIDTH // 2, start_y + i * spacing + 40))
+            t_rect = t_surf.get_rect(center=(self.game.logical_width // 2, start_y + i * spacing))
+            d_rect = d_surf.get_rect(center=(self.game.logical_width // 2, start_y + i * spacing + 40))
             
             surface.blit(t_surf, t_rect)
             surface.blit(d_surf, d_rect)

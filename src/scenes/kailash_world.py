@@ -12,7 +12,7 @@ from src.entities.stranger import Stranger
 from src.entities.divine_attacks import DivineShockwave, TridentStrikeArea
 from src.systems.dialogue_manager import DialogueManager
 from src.utils.helpers import load_font
-from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
+from src.settings import COLORS
 
 class TempleEntrance(InteractiveObject):
     def __init__(self, x: float, y: float, scene):
@@ -967,7 +967,7 @@ class KailashWorldScene(BaseScene):
             p["life"] -= dt
         self.rebirth_particles = [p for p in self.rebirth_particles if p["life"] > 0]
         
-        self.camera.update(self.player, dt)
+        self.camera.update(self.player, dt, self.game.logical_width, self.game.logical_height)
 
     def draw(self, surface: pygame.Surface):
         # Darken atmosphere during combat
@@ -1040,8 +1040,8 @@ class KailashWorldScene(BaseScene):
         elif self.state in ["CLIFFHANGER", "BROKEN_GATE_CLIFFHANGER"]:
             darken = 0.0 # Overlay will handle black screen
             
-        self.world.draw(surface, self.camera, darken)
-        self.dialogue_manager.draw(surface)
+        self.world.draw(surface, self.camera, self.game.logical_width, self.game.logical_height, darken)
+        self.dialogue_manager.draw(surface, self.game.logical_width, self.game.logical_height)
         
         # Draw minimal UI
         surface.blit(self.ui_title_surf, (20, 20))
@@ -1058,7 +1058,7 @@ class KailashWorldScene(BaseScene):
             TOP_MARGIN = 20
             
             obj_w = max(self.ui_obj_title.get_width(), obj_surf.get_width())
-            box_rect = pygame.Rect(LOGICAL_WIDTH - RIGHT_MARGIN - obj_w - 20, TOP_MARGIN, obj_w + 40, 70)
+            box_rect = pygame.Rect(self.game.logical_width - RIGHT_MARGIN - obj_w - 20, TOP_MARGIN, obj_w + 40, 70)
             
             # Draw background panel
             s = pygame.Surface((box_rect.width, box_rect.height), pygame.SRCALPHA)
@@ -1088,8 +1088,8 @@ class KailashWorldScene(BaseScene):
                 if dist > 0: dx, dy = dx/dist, dy/dist
                 
                 # Screen center offset
-                cx = LOGICAL_WIDTH // 2
-                cy = LOGICAL_HEIGHT // 2
+                cx = self.game.logical_width // 2
+                cy = self.game.logical_height // 2
                 
                 # Draw at radius
                 radius = 150
@@ -1109,7 +1109,7 @@ class KailashWorldScene(BaseScene):
         # Draw cinematic text
         if self.cinematic_text and not self.dialogue_manager.active:
             cin_surf = self.font_cinematic.render(self.cinematic_text, True, COLORS["gold"])
-            cin_rect = cin_surf.get_rect(center=(LOGICAL_WIDTH // 2, LOGICAL_HEIGHT // 2))
+            cin_rect = cin_surf.get_rect(center=(self.game.logical_width // 2, self.game.logical_height // 2))
             
             # Simple fade math based on state timer
             alpha = 255
@@ -1128,8 +1128,8 @@ class KailashWorldScene(BaseScene):
                 alpha = max(0, min(255, int((5.0 - self.state_timer) * 255)))
                 
             tut_w, tut_h = 300, 150
-            tut_x = LOGICAL_WIDTH // 2 - tut_w // 2
-            tut_y = LOGICAL_HEIGHT - tut_h - 100
+            tut_x = self.game.logical_width // 2 - tut_w // 2
+            tut_y = self.game.logical_height - tut_h - 100
             
             tut_surf = pygame.Surface((tut_w, tut_h), pygame.SRCALPHA)
             tut_surf.fill((0, 0, 0, int(150 * (alpha/255))))
@@ -1155,17 +1155,17 @@ class KailashWorldScene(BaseScene):
             surf1 = self.font_tutorial_text.render("[WASD / ARROWS] MOVE", True, COLORS["saffron"])
             surf2 = self.font_tutorial_text.render("[SPACE] DIVINE STRIKE", True, COLORS["saffron"])
             surf3 = self.font_tutorial_text.render("[SHIFT] DODGE", True, COLORS["saffron"])
-            surface.blit(surf1, (20, LOGICAL_HEIGHT - 90))
-            surface.blit(surf2, (20, LOGICAL_HEIGHT - 60))
-            surface.blit(surf3, (20, LOGICAL_HEIGHT - 30))
+            surface.blit(surf1, (20, self.game.logical_height - 90))
+            surface.blit(surf2, (20, self.game.logical_height - 60))
+            surface.blit(surf3, (20, self.game.logical_height - 30))
         elif self.state == "REBORN_EXPLORE" and self.state_timer < 10.0:
             alpha = 255
             if self.state_timer > 4.0:
                 alpha = max(0, min(255, int((5.0 - self.state_timer) * 255)))
                 
             tut_w, tut_h = 350, 180
-            tut_x = LOGICAL_WIDTH // 2 - tut_w // 2
-            tut_y = LOGICAL_HEIGHT - tut_h - 100
+            tut_x = self.game.logical_width // 2 - tut_w // 2
+            tut_y = self.game.logical_height - tut_h - 100
             
             tut_surf = pygame.Surface((tut_w, tut_h), pygame.SRCALPHA)
             tut_surf.fill((0, 0, 0, int(150 * (alpha/255))))
@@ -1191,13 +1191,13 @@ class KailashWorldScene(BaseScene):
             # Draw Timer
             timer_text = f"SURVIVE: {max(0, int(self.battle_timer))} SECONDS"
             timer_surf = self.font_ui_obj.render(timer_text, True, COLORS["gold"])
-            surface.blit(timer_surf, (LOGICAL_WIDTH//2 - timer_surf.get_width()//2, 20))
+            surface.blit(timer_surf, (self.game.logical_width//2 - timer_surf.get_width()//2, 20))
             
             # Draw Gate Integrity
             int_text = f"GATE INTEGRITY: {max(0, int(self.gate_integrity))}%"
             int_color = COLORS["ivory"] if self.gate_integrity > 50 else COLORS["crimson"]
             int_surf = self.font_ui_obj.render(int_text, True, int_color)
-            surface.blit(int_surf, (LOGICAL_WIDTH//2 - int_surf.get_width()//2, 60))
+            surface.blit(int_surf, (self.game.logical_width//2 - int_surf.get_width()//2, 60))
             
         # Draw Cliffhanger
         if self.state in ["CLIFFHANGER", "CHAPTER_2_INTRO", "BROKEN_GATE_CLIFFHANGER", "GANESHA_FALLEN", "THE_INEVITABLE_MOMENT", "CHAPTER_2_ENDING", "SHIVA_REALIZATION", "PARVATI_ARRIVES", "CHAPTER_3_INTRO", "SHIVA_PROMISE", "DIVINE_RESTORATION", "ELEPHANT_REVEAL", "GANESHA_IDENTITY", "FINAL_ENDING_CARDS"]:
@@ -1216,7 +1216,7 @@ class KailashWorldScene(BaseScene):
             elif self.state == "CHAPTER_2_ENDING":
                 alpha = min(255, int(self.state_timer * 128))
                 
-            fade_surf = pygame.Surface((LOGICAL_WIDTH, LOGICAL_HEIGHT), pygame.SRCALPHA)
+            fade_surf = pygame.Surface((self.game.logical_width, self.game.logical_height), pygame.SRCALPHA)
             fade_surf.fill((0, 0, 0, alpha))
             surface.blit(fade_surf, (0, 0))
             
@@ -1227,32 +1227,32 @@ class KailashWorldScene(BaseScene):
                     t_alpha = min(255, int((self.state_timer - 1.0) * 255)) if self.state_timer < 2.0 else min(255, int((5.0 - self.state_timer) * 255))
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 40)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 40)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 40)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 40)))
                     
             elif self.state == "BROKEN_GATE_CLIFFHANGER":
                 if self.state_timer > 2.0 and self.state_timer < 5.0:
                     text_surf = self.font_cinematic.render("CHAPTER II — THE FATHER AND THE SON", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 2.0) * 255)) if self.state_timer < 3.0 else min(255, int((5.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 5.0 and self.state_timer < 8.0:
                     text_surf = self.font_cinematic.render("THE BROKEN GATE", True, COLORS["saffron"])
                     t_alpha = min(255, int((self.state_timer - 5.0) * 255)) if self.state_timer < 6.0 else min(255, int((8.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
 
             elif self.state == "CLIFFHANGER":
                 if self.state_timer > 2.0 and self.state_timer < 5.0:
                     text_surf = self.font_cinematic.render("THE FATHER RETURNS", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 2.0) * 255)) if self.state_timer < 3.0 else min(255, int((5.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 5.0 and self.state_timer < 8.0:
                     text_surf = self.font_cinematic.render("CHAPTER I — THE CHILD OF PARVATI", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 5.0) * 255)) if self.state_timer < 6.0 else min(255, int((8.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                     
             elif self.state == "SHIVA_BATTLE_INTRO":
                 if self.state_timer > 1.0 and self.state_timer < 4.0:
@@ -1261,8 +1261,8 @@ class KailashWorldScene(BaseScene):
                     t_alpha = min(255, int((self.state_timer - 1.0) * 255)) if self.state_timer < 2.0 else min(255, int((4.0 - self.state_timer) * 255))
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 40)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 40)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 40)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 40)))
                     
             elif self.state == "SHIVA_BATTLE_END":
                 if self.state_timer > 1.0 and self.state_timer < 6.0:
@@ -1275,9 +1275,9 @@ class KailashWorldScene(BaseScene):
                     t2.set_alpha(t_alpha)
                     t3.set_alpha(t_alpha)
                     
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 60)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
-                    surface.blit(t3, t3.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 60)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 60)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
+                    surface.blit(t3, t3.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 60)))
                     
             elif self.state == "SHIVA_BATTLE_FAIL":
                 if self.state_timer > 1.0:
@@ -1288,8 +1288,8 @@ class KailashWorldScene(BaseScene):
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
                     
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 30)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 30)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 30)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 30)))
                     
             elif self.state == "THE_INEVITABLE_MOMENT":
                 if self.state_timer > 7.0 and self.state_timer < 7.3:
@@ -1299,17 +1299,17 @@ class KailashWorldScene(BaseScene):
                     text_surf = self.font_cinematic.render("THE MOUNTAIN FELL SILENT.", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 2.0) * 255)) if self.state_timer < 3.0 else min(255, int((6.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 6.0 and self.state_timer < 10.0:
                     text_surf = self.font_cinematic.render("THE CHILD HAD KEPT HIS PROMISE.", True, COLORS["saffron"])
                     t_alpha = min(255, int((self.state_timer - 6.0) * 255)) if self.state_timer < 7.0 else min(255, int((10.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 10.0 and self.state_timer < 14.0:
                     text_surf = self.font_cinematic.render("BUT A MOTHER'S HEART DOES NOT ACCEPT SILENCE.", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 10.0) * 255)) if self.state_timer < 11.0 else min(255, int((14.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
 
             elif self.state == "CHAPTER_3_INTRO":
                 if self.state_timer > 1.0 and self.state_timer < 8.0:
@@ -1322,15 +1322,15 @@ class KailashWorldScene(BaseScene):
                     t2.set_alpha(t_alpha)
                     t3.set_alpha(t_alpha)
                     
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 40)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 20)))
-                    surface.blit(t3, t3.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 60)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 40)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 20)))
+                    surface.blit(t3, t3.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 60)))
             elif self.state == "SHIVA_PROMISE":
                 if self.state_timer > 3.0 and self.state_timer < 6.0:
                     text_surf = self.font_cinematic.render("THE PROMISE WAS MADE.", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 3.0) * 255)) if self.state_timer < 4.0 else min(255, int((6.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
             elif self.state == "DIVINE_RESTORATION":
                 # Draw particles
                 for p in self.rebirth_particles:
@@ -1344,7 +1344,7 @@ class KailashWorldScene(BaseScene):
                     
                 # White flash at peak
                 if self.state_timer > 14.5 and self.state_timer < 16.5:
-                    flash_surf = pygame.Surface((LOGICAL_WIDTH, LOGICAL_HEIGHT), pygame.SRCALPHA)
+                    flash_surf = pygame.Surface((self.game.logical_width, self.game.logical_height), pygame.SRCALPHA)
                     f_alpha = min(255, int((self.state_timer - 14.5) * 510)) if self.state_timer < 15.0 else min(255, int((16.5 - self.state_timer) * 170))
                     flash_surf.fill((255, 240, 200, f_alpha))
                     surface.blit(flash_surf, (0,0))
@@ -1356,65 +1356,65 @@ class KailashWorldScene(BaseScene):
                     t_alpha = min(255, int((self.state_timer - 1.0) * 255)) if self.state_timer < 2.0 else min(255, int((7.0 - self.state_timer) * 255))
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 30)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 30)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 30)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 30)))
             elif self.state == "FINAL_ENDING_CARDS":
                 if self.state_timer > 2.0 and self.state_timer < 6.0:
                     text_surf = self.font_cinematic.render("THE OATH WAS KEPT.", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 2.0) * 255)) if self.state_timer < 3.0 else min(255, int((6.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 6.0 and self.state_timer < 10.0:
                     text_surf = self.font_cinematic.render("THE CHILD RETURNED.", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 6.0) * 255)) if self.state_timer < 7.0 else min(255, int((10.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 10.0 and self.state_timer < 14.0:
                     text_surf = self.font_cinematic.render("GANESHA WAS REBORN.", True, COLORS["saffron"])
                     t_alpha = min(255, int((self.state_timer - 10.0) * 255)) if self.state_timer < 11.0 else min(255, int((14.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 14.0 and self.state_timer < 18.0:
                     text_surf = self.font_cinematic.render("AND A NEW STORY BEGAN.", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 14.0) * 255)) if self.state_timer < 15.0 else min(255, int((18.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 18.0 and self.state_timer < 26.0:
                     t1 = self.font_cinematic.render("EKADANTA", True, COLORS["gold"])
                     t2 = self.font_tutorial_text.render("THE STORY CONTINUES...", True, COLORS["saffron"])
                     t_alpha = min(255, int((self.state_timer - 18.0) * 255)) if self.state_timer < 19.0 else min(255, int((26.0 - self.state_timer) * 255))
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 20)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 20)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 20)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 20)))
             elif self.state == "CHAPTER_2_ENDING":
                 if self.state_timer > 2.0 and self.state_timer < 6.0:
                     text_surf = self.font_cinematic.render("THE OATH WAS KEPT.", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 2.0) * 255)) if self.state_timer < 3.0 else min(255, int((6.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 6.0 and self.state_timer < 10.0:
                     text_surf = self.font_cinematic.render("THE SON HAD FALLEN.", True, COLORS["saffron"])
                     t_alpha = min(255, int((self.state_timer - 6.0) * 255)) if self.state_timer < 7.0 else min(255, int((10.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 10.0 and self.state_timer < 14.0:
                     text_surf = self.font_cinematic.render("THE FATHER WOULD RESTORE HIM.", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 10.0) * 255)) if self.state_timer < 11.0 else min(255, int((14.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
                 elif self.state_timer > 14.0 and self.state_timer < 18.0:
                     t1 = self.font_cinematic.render("CHAPTER II", True, COLORS["gold"])
                     t2 = self.font_cinematic.render("THE FATHER AND THE SON", True, COLORS["ivory"])
                     t_alpha = min(255, int((self.state_timer - 14.0) * 255)) if self.state_timer < 15.0 else min(255, int((18.0 - self.state_timer) * 255))
                     t1.set_alpha(t_alpha)
                     t2.set_alpha(t_alpha)
-                    surface.blit(t1, t1.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 - 40)))
-                    surface.blit(t2, t2.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2 + 40)))
+                    surface.blit(t1, t1.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 - 40)))
+                    surface.blit(t2, t2.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2 + 40)))
 
                 elif self.state_timer > 22.0 and self.state_timer < 26.0:
                     text_surf = self.font_cinematic.render("CHAPTER III - GANESHA REBORN", True, COLORS["gold"])
                     t_alpha = min(255, int((self.state_timer - 22.0) * 255)) if self.state_timer < 23.0 else min(255, int((26.0 - self.state_timer) * 255))
                     text_surf.set_alpha(t_alpha)
-                    surface.blit(text_surf, text_surf.get_rect(center=(LOGICAL_WIDTH//2, LOGICAL_HEIGHT//2)))
+                    surface.blit(text_surf, text_surf.get_rect(center=(self.game.logical_width//2, self.game.logical_height//2)))
 

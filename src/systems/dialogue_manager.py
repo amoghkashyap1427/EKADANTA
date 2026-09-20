@@ -1,5 +1,5 @@
 import pygame
-from src.settings import COLORS, LOGICAL_WIDTH, LOGICAL_HEIGHT
+from src.settings import COLORS
 from src.utils.helpers import load_font
 
 class DialogueManager:
@@ -19,22 +19,7 @@ class DialogueManager:
         self.auto_advance = True
         
         self.on_complete = None
-        
-        # UI Box Dimensions
-        self.box_width = LOGICAL_WIDTH - 200
         self.box_height = 180
-        self.box_x = 100
-        self.box_y = LOGICAL_HEIGHT - self.box_height - 30
-        
-        # Pre-render parchment bg
-        self.bg_surf = pygame.Surface((self.box_width, self.box_height), pygame.SRCALPHA)
-        # Semi-transparent dark brown/charcoal
-        self.bg_surf.fill((20, 15, 10, 230))
-        # Gold border
-        pygame.draw.rect(self.bg_surf, COLORS["muted_gold"], self.bg_surf.get_rect(), 2)
-        # Inner thin border
-        inner_rect = self.bg_surf.get_rect().inflate(-10, -10)
-        pygame.draw.rect(self.bg_surf, (*COLORS["saffron"], 100), inner_rect, 1)
 
     def start_dialogue(self, dialogues: list[tuple[str, str]], on_complete=None):
         if not dialogues:
@@ -92,23 +77,31 @@ class DialogueManager:
             if self.wait_timer > delay:
                 self._next_line()
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface, logical_width: float = 1280, logical_height: float = 720):
         if not self.active:
             return
             
-        # Draw box
-        surface.blit(self.bg_surf, (self.box_x, self.box_y))
+        box_width = logical_width - 200
+        box_x = 100
+        box_y = logical_height - self.box_height - 30
+            
+        # Draw box dynamically
+        bg_surf = pygame.Surface((box_width, self.box_height), pygame.SRCALPHA)
+        bg_surf.fill((20, 15, 10, 230))
+        pygame.draw.rect(bg_surf, COLORS["muted_gold"], bg_surf.get_rect(), 2)
+        pygame.draw.rect(bg_surf, (*COLORS["saffron"], 100), bg_surf.get_rect().inflate(-10, -10), 1)
+        surface.blit(bg_surf, (box_x, box_y))
         
         speaker, text = self.dialogues[self.current_index]
         current_text = text[:int(self.char_index)]
         
         # Render speaker
         speaker_surf = self.font_speaker.render(speaker, True, COLORS["saffron"])
-        surface.blit(speaker_surf, (self.box_x + 30, self.box_y + 20))
+        surface.blit(speaker_surf, (box_x + 30, box_y + 20))
         
         # Render text (simple word wrap or single line for now)
         text_surf = self.font_text.render(current_text, True, COLORS["ivory"])
-        surface.blit(text_surf, (self.box_x + 30, self.box_y + 70))
+        surface.blit(text_surf, (box_x + 30, box_y + 70))
         
         # Draw indicator if waiting for input
         if not self.is_typing:
@@ -117,4 +110,4 @@ class DialogueManager:
             import math
             import time
             bounce = math.sin(time.time() * 5) * 5
-            surface.blit(indicator, (self.box_x + self.box_width - 40, self.box_y + self.box_height - 40 + bounce))
+            surface.blit(indicator, (box_x + box_width - 40, box_y + self.box_height - 40 + bounce))

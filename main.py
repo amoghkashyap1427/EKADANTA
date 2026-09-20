@@ -1,11 +1,16 @@
 import asyncio
 import pygame
 import sys
+from src.settings import LOGICAL_WIDTH, LOGICAL_HEIGHT
 
 from src.game import Game
 
 async def main():
-    game = Game()
+    pygame.init()
+    # Set mode to (0, 0) to request full available window size in Pygbag
+    window = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
+    
+    game = Game(window)
     
     while game.running:
         # 60 FPS is defined in settings, but we can hardcode 60 or import it

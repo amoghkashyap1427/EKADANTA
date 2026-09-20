@@ -23,12 +23,19 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         
-        ASSETS_DIR.mkdir(parents=True, exist_ok=True)
-        (ASSETS_DIR / "images").mkdir(exist_ok=True)
-        (ASSETS_DIR / "audio").mkdir(exist_ok=True)
-        (ASSETS_DIR / "fonts").mkdir(exist_ok=True)
-        (ASSETS_DIR / "data").mkdir(exist_ok=True)
-        SAVES_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+            (ASSETS_DIR / "images").mkdir(exist_ok=True)
+            (ASSETS_DIR / "audio").mkdir(exist_ok=True)
+            (ASSETS_DIR / "fonts").mkdir(exist_ok=True)
+            (ASSETS_DIR / "data").mkdir(exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not create assets dir (expected in pygbag): {e}")
+            
+        try:
+            SAVES_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not create saves dir: {e}")
         
         self.save_manager = SaveManager()
         self.audio_manager = AudioManager()

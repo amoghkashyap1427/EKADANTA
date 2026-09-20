@@ -2,6 +2,7 @@
 Global configuration and settings.
 """
 import os
+import sys
 from pathlib import Path
 
 # Window settings
@@ -25,7 +26,10 @@ COLORS = {
 }
 
 # Directories
-BASE_DIR = Path(__file__).resolve().parent.parent
+if sys.platform == "emscripten":
+    BASE_DIR = Path(".")
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
 SAVES_DIR = BASE_DIR / "saves"
 

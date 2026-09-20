@@ -1,9 +1,8 @@
 import sys
 import asyncio
-from pathlib import Path
 
 # Ensure src is in the path
-sys.path.append(str(Path(__file__).parent))
+sys.path.append(".")
 
 from src.game import Game
 

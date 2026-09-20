@@ -5,7 +5,10 @@ from src.settings import SAVES_DIR
 class SaveManager:
     def __init__(self):
         self.saves_dir = SAVES_DIR
-        self.saves_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.saves_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not create saves dir in SaveManager: {e}")
         self.save_file = self.saves_dir / "savegame.json"
         
         self.default_data = {
